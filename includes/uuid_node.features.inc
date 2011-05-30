@@ -5,20 +5,19 @@
  */
 
 /**
- * Implementation of hook_features_export_options().
+ * Implements hook_features_export_options().
  */
 function uuid_node_features_export_options() {
   $options = array();
 
-  $types = node_get_types('names');
+  $types = node_type_get_names();
 
-  $query = 'SELECT n.nid, n.title, n.type, u.uuid
-    FROM {node} n INNER JOIN {uuid_node} u 
-    ON n.nid = u.nid ORDER BY n.type, n.title ASC';
-  $result = db_query($query);
-  while ($node = db_fetch_object($result)) {
+  $query = 'SELECT n.nid, n.title, n.type, n.uuid
+    FROM {node} n ORDER BY n.type, n.title ASC';
+  $results = db_query($query);
+  foreach ($results as $node) {
     $options[$node->uuid] = t('@type: @title', array(
-      '@type' => $types[$node->type], 
+      '@type' => $types[$node->type],
       '@title' => $node->title,
     ));
   }
@@ -27,7 +26,7 @@ function uuid_node_features_export_options() {
 }
 
 /**
- * Implementation of hook_features_export().
+ * Implements hook_features_export().
  */
 function uuid_node_features_export($data, &$export, $module_name = '') {
   $pipe = array();
@@ -37,7 +36,7 @@ function uuid_node_features_export($data, &$export, $module_name = '') {
   uuid_features_load_module_includes();
 
   foreach ($data as $uuid) {
-    $node = node_get_by_uuid($uuid);
+    $node = node_load(uuid_node_find($uuid));
 
     $export['features']['uuid_node'][$uuid] = $uuid;
     $pipe['node'][$node->type] = $node->type;
@@ -56,7 +55,7 @@ function uuid_node_features_export($data, &$export, $module_name = '') {
 }
 
 /**
- * Implementation of hook_features_export_render().
+ * Implements hook_features_export_render().
  */
 function uuid_node_features_export_render($module, $data) {
   $translatables = $code = array();
@@ -66,7 +65,7 @@ function uuid_node_features_export_render($module, $data) {
   $code[] = '  $nodes = array();';
   $code[] = '';
   foreach ($data as $uuid) {
-    $node = node_get_by_uuid($uuid);
+    $node = node_load(uuid_node_find($uuid));
     if (!empty($node->path)) {
       $node->pathauto_perform_alias = FALSE;
     }
@@ -83,7 +82,7 @@ function uuid_node_features_export_render($module, $data) {
     // hook_uuid_node_features_export_render_alter(&$export, $node, $module);
     drupal_alter('uuid_node_features_export_render', $export, $node, $module);
 
-    $code[] = '  $nodes[] = '. features_var_export($export) .';';
+    $code[] = '  $nodes[] = ' . features_var_export($export) . ';';
   }
 
   if (!empty($translatables)) {
@@ -96,14 +95,14 @@ function uuid_node_features_export_render($module, $data) {
 }
 
 /**
- * Implementation of hook_features_revert().
+ * Implements hook_features_revert().
  */
 function uuid_node_features_revert($module) {
   uuid_node_features_rebuild($module);
 }
 
 /**
- * Implementation of hook_features_rebuild().
+ * Implements hook_features_rebuild().
  * Rebuilds nodes based on UUID from code defaults.
  */
 function uuid_node_features_rebuild($module) {
@@ -112,10 +111,10 @@ function uuid_node_features_rebuild($module) {
     module_load_include('inc', 'node', 'node.pages');
 
     foreach ($nodes as $data) {
-      $node = (object)$data;
+      $node = (object) $data;
       node_object_prepare($node);
 
-      $existing = node_get_by_uuid($node->uuid);
+      $existing= node_load(uuid_node_find($uuid));
 
       if (!empty($existing)) {
         $node->nid = $existing->nid;

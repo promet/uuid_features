@@ -5,24 +5,21 @@
  */
 
 /**
- * Implementation of hook_features_export_options().
+ * Implements hook_features_export_options().
  */
 function uuid_vocabulary_features_export_options() {
   $options = array();
 
-  $query = 'SELECT v.vid, v.name, u.uuid
-    FROM {vocabulary} v INNER JOIN {uuid_vocabulary} u 
-    ON v.vid = u.vid ORDER BY v.name ASC';
-  $result = db_query($query);
-  while ($vocab = db_fetch_object($result)) {
-    $options[$vocab->uuid] = $vocab->name;
+  $vocabularies = taxonomy_get_vocabularies();
+  foreach ($vocabularies as $vocab) {
+    $options[$vocab->machine_name] = $vocab->name;
   }
 
   return $options;
 }
 
 /**
- * Implementation of hook_features_export().
+ * Implements hook_features_export().
  */
 function uuid_vocabulary_features_export($data, &$export, $module_name = '') {
   $pipe = array();
@@ -39,7 +36,7 @@ function uuid_vocabulary_features_export($data, &$export, $module_name = '') {
 }
 
 /**
- * Implementation of hook_features_export_render().
+ * Implements hook_features_export_render().
  */
 function uuid_vocabulary_features_export_render($module = 'foo', $data) {
   $translatables = $code = array();
@@ -47,8 +44,7 @@ function uuid_vocabulary_features_export_render($module = 'foo', $data) {
   $code[] = '  $vocabularies = array();';
   $code[] = '';
   foreach ($data as $uuid) {
-    $vid = uuid_get_serial_id('vocabulary', 'vid', $uuid);
-    $vocab = taxonomy_vocabulary_load($vid);
+    $vocab = taxonomy_vocabulary_machine_name_load($uuid);
 
     if (!$vocab) {
       continue;
@@ -57,15 +53,26 @@ function uuid_vocabulary_features_export_render($module = 'foo', $data) {
     $export = array('uuid' => $uuid);
 
     // Whitelist of vocabulary properties.
-    $props = array('name', 'description', 'help', 'relations', 'heirarchy', 
-      'multiple', 'required', 'tags', 'module', 'weight', 'nodes');
+    $props = array(
+      'name',
+      'description',
+      'help',
+      'relations',
+      'heirarchy',
+      'multiple',
+      'required',
+      'tags',
+      'module',
+      'weight',
+      'nodes',
+    );
     foreach ($props as $key) {
       if (isset($vocab->$key)) {
         $export[$key] = $vocab->$key;
       }
     }
 
-    $code[] = '  $vocabularies[] = '. features_var_export($export, '  ') .';';
+    $code[] = '  $vocabularies[] = ' . features_var_export($export, '  ') . ';';
   }
 
   if (!empty($translatables)) {
@@ -78,30 +85,27 @@ function uuid_vocabulary_features_export_render($module = 'foo', $data) {
 }
 
 /**
- * Implementation of hook_features_revert().
+ * Implements hook_features_revert().
  */
 function uuid_vocabulary_features_revert($module) {
   uuid_vocabulary_features_rebuild($module);
 }
 
 /**
- * Implementation of hook_features_rebuild().
+ * Implements hook_features_rebuild().
  * Rebuilds nodes based on UUID from code defaults.
  */
 function uuid_vocabulary_features_rebuild($module) {
   $vocabs = module_invoke($module, 'uuid_features_default_vocabularies');
   if (!empty($vocabs)) {
-    foreach ($vocabs as $data) {
-      $existing = db_result(db_query('SELECT vid FROM {uuid_vocabulary} WHERE uuid = "%s"', $data['uuid']));
+    foreach ($vocabs as $vocab) {
+      $vocabulary = taxonomy_vocabulary_machine_name_load($vocab->machine_name);
 
-      if (!empty($existing)) {
-        $data['vid'] = $existing;
+      if (!empty($vocabulary)) {
+        $vocab->vid = $vocabulary->vid;
       }
 
-      taxonomy_save_vocabulary($data);
-
-      // TODO: remove when http://drupal.org/node/860442 is resolved.
-      uuid_set_uuid('vocabulary', 'vid', $data['vid'], $data['uuid']);
+      taxonomy_vocabulary_save($vocab);
     }
   }
 }
