@@ -3,6 +3,7 @@ description = Provides features integration for content (nodes, taxonomy, etc) b
 core = 7.x
 dependencies[] = features
 dependencies[] = uuid
+package = Features
 
 files[] = uuid_features.install
 files[] = uuid_features.module

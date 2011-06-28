@@ -36,7 +36,9 @@ function uuid_node_features_export($data, &$export, $module_name = '') {
   uuid_features_load_module_includes();
 
   foreach ($data as $uuid) {
-    $node = node_load(uuid_node_find($uuid));
+    // Load the existing node, with a fresh cache.
+    $nid = uuid_node_find($uuid);
+    $node = node_load($nid, NULL, TRUE);
 
     $export['features']['uuid_node'][$uuid] = $uuid;
     $pipe['node'][$node->type] = $node->type;
@@ -65,7 +67,16 @@ function uuid_node_features_export_render($module, $data) {
   $code[] = '  $nodes = array();';
   $code[] = '';
   foreach ($data as $uuid) {
-    $node = node_load(uuid_node_find($uuid));
+    // Only export the node if it exists.
+    $nid = uuid_node_find($uuid);
+    if ($nid === FALSE) {
+      continue;
+    }
+    // Attempt to load the node, using a fresh cache.
+    $node = node_load($nid, NULL, TRUE);
+    if (empty($node)) {
+      continue;
+    }
     if (!empty($node->path)) {
       $node->pathauto_perform_alias = FALSE;
     }
@@ -74,9 +85,11 @@ function uuid_node_features_export_render($module, $data) {
     // Use date instead of created, in the same format used by node_object_prepare.
     $export->date = format_date($export->created, 'custom', 'Y-m-d H:i:s O');
 
-    // Don't cause conflicts with the legacy nid/vid fields.
+    // Don't cause conflicts with nid/vid/revision_timestamp/changed fields.
     unset($export->nid);
     unset($export->vid);
+    unset($export->revision_timestamp);
+    unset($export->changed);
 
     // The hook_alter signature is:
     // hook_uuid_node_features_export_render_alter(&$export, $node, $module);
@@ -114,7 +127,9 @@ function uuid_node_features_rebuild($module) {
       $node = (object) $data;
       node_object_prepare($node);
 
-      $existing= node_load(uuid_node_find($uuid));
+      // Find the matching UUID, with a fresh cache.
+      $nid = uuid_node_find($node->uuid);
+      $existing = node_load($nid, NULL, TRUE);
 
       if (!empty($existing)) {
         $node->nid = $existing->nid;
