@@ -53,3 +53,17 @@ function uuid_features_load_module_includes() {
     $loaded = TRUE;
   }
 }
+
+/**
+ * Implements hook_features_pipe_COMPONENT_alter().
+ *
+ * When exporting a vocabulary, include its terms.
+ */
+function uuid_features_features_pipe_taxonomy_alter(&$pipe, $data, $export) {
+  if ($vocab = taxonomy_vocabulary_machine_name_load($data)) {
+    foreach (taxonomy_get_tree($vocab->vid) as $term) {
+      uuid_term_features_get_dependencies($export, $term->uuid);
+    }
+    $pipe['uuid_term'] = $export['features']['uuid_term'];
+  }
+}
