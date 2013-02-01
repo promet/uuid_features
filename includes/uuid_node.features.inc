@@ -131,7 +131,7 @@ function uuid_node_features_rebuild($module) {
       // Find the matching UUID, with a fresh cache.
       $nids = entity_get_id_by_uuid('node', array($node->uuid));
       if (isset($nids[$node->uuid])) {
-          $nid = $nids[$node->uuid];
+          $nid = array_key_exists($node->uuid, $nids) ? $nids[$node->uuid] : FALSE;
           $existing = node_load($nid, NULL, TRUE);
           if (!empty($existing)) {
             $node->nid = $existing->nid;
