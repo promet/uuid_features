@@ -1,6 +1,20 @@
 <?php
 
 /**
+ * Implements hook_menu().
+ */
+function uuid_features_menu() {
+  $items['admin/config/content/uuid_features'] = array(
+    'access arguments' => array('administer site configuration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uuid_features_settings'),
+    'title' => 'UUID Features Integration',
+    'description' => 'Configure the settings for UUID Features Integration.',
+  );
+  return $items;
+}
+
+/**
  * Implements hook_features_api().
  */
 function uuid_features_features_api() {
@@ -68,4 +82,188 @@ function uuid_features_features_pipe_taxonomy_alter($pipe, $data, $export) {
     }
     $pipe['uuid_term'] = $export['features']['uuid_term'];
   }
+}
+
+/**
+ * Menu callback to configure module settings.
+ */
+function uuid_features_settings($form, &$form_state) {
+  $vocabularies = array();
+  foreach (taxonomy_vocabulary_get_names() as $machine_name => $properties) {
+    $vocabularies[$machine_name] = $properties->name;
+  }
+  $form['file']['uuid_features_file_types'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Files exported for vocabularies'),
+    '#default_value' => variable_get('uuid_features_file_types', array()),
+    '#options' => $vocabularies,
+    '#description' => t('Which vocabularies should export file fields?'),
+  );
+
+  $form['file']['uuid_features_file_mode'] = array(
+    '#type' => 'radios',
+    '#title' => t('File export mode'),
+    '#default_value' => variable_get('uuid_features_file_mode', 'inline'),
+    '#options' => array(
+      'inline' => t('Inline Base64'),
+      'local' => t('Local file export'),
+      'remote' => t('Remote file export, URL')
+     ),
+    '#description' => t('Should file exports be inline inside the export code, a local path to the file, or a URL? Inline Base64 is the easiest option to use but can sometimes exceed PHP post limits, local and remote modes are more useful for power users.  <em>NOTE: Remote mode only works with a public files directory.</em>'),
+  );
+
+  $form['file']['uuid_features_file_assets_path'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Local file field assets path'),
+    '#size' => 60,
+    '#maxlength' => 255,
+    '#default_value' => variable_get('uuid_features_file_assets_path', ''),
+    '#description' => t(
+      'Optionally, copy files to this path when the node is exported.
+      The primary advantage of this is to divert exported files into a
+      safe location so they can be committed to source control (eg: SVN,
+      CVS, Git).  <em>Tip: For install profile developers, setting this
+      path to <code>profiles/my_profile/uuid_features_assets</code> may be
+      useful.</em>'
+    ),
+    '#required' => FALSE,
+    '#states' => array(
+      'visible' => array(
+        ':input[name=uuid_features_file_mode]' => array('value' => 'local'),
+      ),
+    ),
+  );
+
+  $form['file']['uuid_features_file_supported_fields'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Supported file field types'),
+    '#default_value' => variable_get('uuid_features_file_supported_fields', 'file, image'),
+    '#maxlength' => 512,
+    '#description' => t('Comma seperated list of file field types to detect for export/import.'),
+  );
+
+  return system_settings_form($form);
+}
+
+/**
+ * Detects remote and local file exports and imports accordingly.
+ *
+ * @param &$file
+ *   The file, passed by reference.
+ * @return TRUE or FALSE
+ *   Depending on success or failure.  On success the $file object will
+ *   have a valid $file->fid attribute.
+ */
+function _uuid_features_file_field_import_file(&$file) {
+  // This is here for historical reasons to support older exports.  It can be
+  // removed in the next major version.
+  $file->uri = strtr($file->uri, array('#FILES_DIRECTORY_PATH#' => 'public:/'));
+
+  // The file is already in the right location AND either the
+  // uuid_features_file_path is not set or the uuid_features_file_path and filepath
+  // contain the same file
+  if (is_file($file->uri) &&
+    (
+      (!isset($file->uuid_features_file_path) || !is_file($file->uuid_features_file_path)) ||
+      (
+        is_file($file->uuid_features_file_path) &&
+        filesize($file->uri) == filesize($file->uuid_features_file_path) &&
+        strtoupper(dechex(crc32(file_get_contents($file->uri)))) ==
+          strtoupper(dechex(crc32(file_get_contents($file->uuid_features_file_path))))
+      )
+    )
+  ) {
+    // Keep existing file if it exists already at this uri (see also #1023254)
+    // Issue #1058750.
+    $query = db_select('file_managed', 'f')
+        ->fields('f', array('fid'))
+        ->condition('uri', $file->uri)
+        ->execute()
+        ->fetchCol();
+
+    if (!empty($query)) {
+      watchdog('uuid_features', 'kept existing managed file at uri "%uri"', array('%uri' => $file->uri), WATCHDOG_NOTICE);
+      $file = file_load(array_shift($query));
+    }
+
+    $file = file_save($file);
+  }
+  elseif (isset($file->uuid_features_file_data)) {
+    $directory = drupal_dirname($file->uri);
+    if (file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
+      if (file_put_contents($file->uri, base64_decode($file->uuid_features_file_data))) {
+        $file = file_save($file);
+      }
+    }
+  }
+  // The file is in a local location, move it to the
+  // destination then finish the save
+  elseif (isset($file->uuid_features_file_path) && is_file($file->uuid_features_file_path)) {
+    $directory = drupal_dirname($file->uri);
+    if (file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
+      // The $file->uuid_features_file_path is passed to reference, and modified
+      // by file_unmanaged_copy().  Making a copy to avoid tainting the original.
+      $uuid_features_file_path = $file->uuid_features_file_path;
+      file_unmanaged_copy($uuid_features_file_path, $directory, FILE_EXISTS_REPLACE);
+
+      // At this point the $file->uuid_features_file_path will contain the
+      // destination of the copied file
+      //$file->uri = $uuid_features_file_path;
+      $file = file_save($file);
+    }
+  }
+  // The file is in a remote location, attempt to download it
+  elseif (isset($file->uuid_features_file_url)) {
+    // Need time to do the download
+    ini_set('max_execution_time', 900);
+
+    $temp_path = file_directory_temp() . '/' . md5(mt_rand()) . '.txt';
+    if (($source = fopen($file->uuid_features_file_url, 'r')) == FALSE) {
+      drupal_set_message(t("Could not open '@file' for reading.", array('@file' => $file->uuid_features_file_url)));
+      return FALSE;
+    }
+    elseif (($dest = fopen($temp_path, 'w')) == FALSE) {
+      drupal_set_message(t("Could not open '@file' for writing.", array('@file' => $file->uri)));
+      return FALSE;
+    }
+    else {
+      // PHP5 specific, downloads the file and does buffering
+      // automatically.
+      $bytes_read = @stream_copy_to_stream($source, $dest);
+
+      // Flush all buffers and wipe the file statistics cache
+      @fflush($source);
+      @fflush($dest);
+      clearstatcache();
+
+      if ($bytes_read != filesize($temp_path)) {
+        drupal_set_message(t("Remote export '!url' could not be fully downloaded, '@file' to temporary location '!temp'.", array('!url' => $file->uuid_features_file_url, '@file' => $file->uri, '!temp' => $temp_path)));
+        return FALSE;
+      }
+      // File was downloaded successfully!
+      else {
+        if (!@copy($temp_path, $file->uri)) {
+          unlink($temp_path);
+          drupal_set_message(t("Could not move temporary file '@temp' to '@file'.", array('@temp' => $temp_path, '@file' => $file->uri)));
+          return FALSE;
+        }
+
+        unlink($temp_path);
+        $file->filesize = filesize($file->uri);
+        $file->filemime = file_get_mimetype($file->uri);
+      }
+    }
+
+    fclose($source);
+    fclose($dest);
+
+    $file = file_save($file);
+  }
+  // Unknown error
+  else {
+    drupal_set_message(t("Unknown error occurred attempting to import file: @filepath", array('@filepath' => $file->uri)), 'error');
+    return FALSE;
+  }
+
+  return TRUE;
 }
