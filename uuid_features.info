@@ -12,6 +12,7 @@ files[] = includes/uuid_features.drush.inc
 files[] = includes/uuid_file.features.inc
 files[] = includes/uuid_node.features.inc
 files[] = includes/uuid_term.features.inc
+files[] = includes/uuid_bean.features.inc
 files[] = modules/content.inc
 files[] = modules/filefield.inc
 files[] = modules/nodereference.inc
