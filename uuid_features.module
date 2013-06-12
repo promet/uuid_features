@@ -85,12 +85,20 @@ function uuid_features_load_module_includes() {
  */
 function uuid_features_features_pipe_taxonomy_alter(&$pipe, $data, $export) {
   if (variable_get('uuid_features_vocabulary_terms', FALSE) == TRUE) {
-    if ($vocab = taxonomy_vocabulary_machine_name_load($data)) {
-      $export['features']['uuid_term'] = array();
-      foreach (taxonomy_get_tree($vocab->vid) as $term) {
-        uuid_term_features_get_dependencies($export, $term->uuid);
+    if (!is_array($data)) {
+      $data = array($data);
+    }
+    if (empty($pipe['uuid_term'])) {
+      $pipe['uuid_term'] = array();
+    }
+    foreach ($data as $machine_name) {
+      if ($vocab = taxonomy_vocabulary_machine_name_load($machine_name)) {
+        $export['features']['uuid_term'] = array();
+        foreach (taxonomy_get_tree($vocab->vid) as $term) {
+          uuid_term_features_get_dependencies($export, $term->uuid);
+        }
+        $pipe['uuid_term'] = array_merge($pipe['uuid_term'], $export['features']['uuid_term']);
       }
-      $pipe['uuid_term'] = $export['features']['uuid_term'];
     }
   }
 }
