@@ -132,17 +132,15 @@ function uuid_bean_features_revert($module) {
  * Rebuilds beans based on UUID from code defaults.
  */
 function uuid_bean_features_rebuild($module) {
-  $beans = module_invoke($module, 'uuid_features_default_beans');
+  $beans = features_get_default('uuid_bean', $module);
 
   if (!empty($beans)) {
-
+    // Get info about current beans types available in system.
+    $entity_info = bean_entity_info();
     // Loop through the export.
     foreach ($beans as $data) {
-      // Determine bean type (bundle).
-      $entity_info = bean_entity_info();
-      // Double-check that module-provided bean types are still
-      // being instantiated by their respective plugins.
-      if (!in_array($data['type'], array_keys($entity_info['bean']['bundles']))) {
+      // Double-check that bean can be created/reverted.
+      if (!isset($entity_info['bean']['bundles'][$data['type']])) {
         drupal_set_message('Bundle not found for bean of type ' . $data['type'] . '. Bean was not created/reverted.', 'warning');
       }
       else {
