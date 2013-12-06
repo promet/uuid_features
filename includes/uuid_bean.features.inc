@@ -9,11 +9,15 @@
  */
 function uuid_bean_features_export_options() {
   $options = array();
-  if (module_exists("bean_uuid")) {
-    $query = 'SELECT b.bid, b.delta, b.type, b.uuid
-      FROM {bean} b ORDER BY b.type, b.delta ASC';
-    $results = db_query($query);
-    foreach ($results as $bean) {
+  $types = variable_get('uuid_features_entity_bean', FALSE);
+  if (module_exists("bean_uuid") && !empty($types)) {
+    $query = db_select('bean', 'n');
+    $query->fields('n', array('bid', 'delta', 'type', 'uuid'))
+      ->condition('type', $types)
+      ->orderBy('type')
+      ->orderBy('delta', 'ASC');
+    $beans = $query->execute()->fetchAll();
+    foreach ($beans as $bean) {
       $options[$bean->uuid] = t('@type: @delta', array(
         '@type' => $bean->type,
         '@delta' => $bean->delta,
@@ -90,7 +94,8 @@ function uuid_bean_features_export_render($module, $data) {
     if (!count($beans)) {
       continue;
     }
-    $export = reset($beans);
+    $first_bean = reset($beans);
+    $export = clone $first_bean;
 
     // Unset some things that dont need to be exported.
     unset($export->bid);
