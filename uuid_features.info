@@ -5,3 +5,5 @@ dependencies[] = features
 dependencies[] = uuid
 dependencies[] = entity
 package = Features
+
+configure = admin/config/content/uuid_features
