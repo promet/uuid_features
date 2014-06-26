@@ -177,7 +177,7 @@ function uuid_term_features_rebuild($module) {
           $term->name = $data['name'];
 
           $entity_type = 'taxonomy_term';
-          drupal_alter('uuid_entity_features_rebuild', $entity_type, $node, $module);
+          drupal_alter('uuid_entity_features_rebuild', $entity_type, $term, $module);
 
           taxonomy_term_save($term);
         }
