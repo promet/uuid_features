@@ -31,8 +31,6 @@ function uuid_user_features_export($data, &$export, $module_name = '') {
 
   $export['dependencies']['uuid_features'] = 'uuid_features';
 
-  uuid_features_load_module_includes();
-
   $uids = entity_get_id_by_uuid('user', $data);
   foreach ($uids as $uuid => $uid) {
     // Load the existing user.
@@ -54,8 +52,6 @@ function uuid_user_features_export($data, &$export, $module_name = '') {
  */
 function uuid_user_features_export_render($module, $data) {
   $translatables = $code = array();
-
-  uuid_features_load_module_includes();
 
   $code[] = '  $users = array();';
   $code[] = '';
@@ -149,7 +145,7 @@ function uuid_user_features_rebuild($module) {
       }
 
       $entity_type = 'user';
-      drupal_alter('uuid_entity_features_rebuild', $entity_type, $account, $module);
+      drupal_alter('uuid_entity_features_rebuild', $entity_type, $account, $data);
       drupal_alter('uuid_user_features_rebuild', $account, $module);
 
       if ($existing->uid === NULL) {

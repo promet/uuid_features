@@ -6,6 +6,33 @@
 
 define('UUID_FEATURES_DEFAULT_FALLBACK_ID', 1);
 
+// Ensure our on-behalf implementations are detected.
+uuid_features_include();
+
+/**
+ * Load include files for on-behalf implementations of other modules.
+ *
+ * This modules provides on-behalf-of integrations for other modules. The
+ * required files can be included with this function.
+ *
+ * Similar to:
+ * @see features_include()
+ */
+function uuid_features_include() {
+  static $loaded = FALSE;
+
+  if (!$loaded) {
+    $inc_path = drupal_get_path('module', 'uuid_features') . '/includes/modules';
+    foreach (module_list() as $module) {
+      $file = "$inc_path/$module.inc";
+      if (file_exists($file)) {
+        include_once DRUPAL_ROOT . '/' . $file;
+      }
+    }
+    $loaded = TRUE;
+  }
+}
+
 /**
  * Implements hook_menu().
  */
@@ -115,27 +142,6 @@ function uuid_features_features_api() {
   }
 
   return $components;
-}
-
-/**
- * Load all include files for enabled modules this module supports.
- *
- * This modules provides on-behalf-of integration for some modules, the required
- * files can be included with this function.
- */
-function uuid_features_load_module_includes() {
-  static $loaded = FALSE;
-
-  if (!$loaded) {
-    $inc_path = drupal_get_path('module', 'uuid_features') . '/includes/modules';
-    foreach (module_list() as $module) {
-      $file = "$inc_path/$module.inc";
-      if (file_exists($file)) {
-        include_once DRUPAL_ROOT . '/' . $file;
-      }
-    }
-    $loaded = TRUE;
-  }
 }
 
 /**

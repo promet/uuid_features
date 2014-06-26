@@ -175,10 +175,6 @@ function uuid_term_features_rebuild($module) {
           $term->uuid = $data['uuid'];
           $term->vid = $voc->vid;
           $term->name = $data['name'];
-
-          $entity_type = 'taxonomy_term';
-          drupal_alter('uuid_entity_features_rebuild', $entity_type, $term, $module);
-
           taxonomy_term_save($term);
         }
       }
@@ -189,6 +185,10 @@ function uuid_term_features_rebuild($module) {
       $voc = taxonomy_vocabulary_machine_name_load($term->vocabulary_machine_name);
       if ($voc) {
         $term->vid = $voc->vid;
+
+        $entity_type = 'taxonomy_term';
+        drupal_alter('uuid_entity_features_rebuild', $entity_type, $term, $data);
+
         uuid_features_file_field_import($term, 'taxonomy_term');
         entity_uuid_save('taxonomy_term', $term);
       }

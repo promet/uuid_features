@@ -40,8 +40,6 @@ function uuid_node_features_export($data, &$export, $module_name = '') {
 
   $export['dependencies']['uuid_features'] = 'uuid_features';
 
-  uuid_features_load_module_includes();
-
   $nids = entity_get_id_by_uuid('node', $data);
   foreach ($nids as $uuid => $nid) {
     // Load the existing node, with a fresh cache.
@@ -69,8 +67,6 @@ function uuid_node_features_export($data, &$export, $module_name = '') {
  */
 function uuid_node_features_export_render($module, $data) {
   $translatables = $code = array();
-
-  uuid_features_load_module_includes();
 
   $code[] = '  $nodes = array();';
   $code[] = '';
@@ -201,7 +197,7 @@ function uuid_node_features_rebuild_nodes($nodes, $max_nesting = 5, $nesting_lev
       }
 
       $entity_type = 'node';
-      drupal_alter('uuid_entity_features_rebuild', $entity_type, $node, $module);
+      drupal_alter('uuid_entity_features_rebuild', $entity_type, $node, $data);
       drupal_alter('uuid_node_features_rebuild', $node, $module);
 
       $node = node_submit($node);

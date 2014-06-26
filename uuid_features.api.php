@@ -39,10 +39,10 @@ function hook_uuid_entity_features_export_render_alter($entity_type, $export, $e
  *   The entity type to export.
  * @param object $entity
  *   The entity to import.
- * @param string $module
- *   The module to import for.
+ * @param array $data
+ *   The raw data from the export.
  */
-function hook_uuid_entity_features_rebuild_alter($entity_type, $entity, $module) {
+function hook_uuid_entity_features_rebuild_alter($entity_type, $entity, $data) {
 
 }
 
