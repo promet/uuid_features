@@ -100,7 +100,7 @@ function uuid_term_features_get_dependencies(&$export, $uuid) {
 /**
  * Implements hook_features_export_render().
  */
-function uuid_term_features_export_render($module = 'foo', $data) {
+function uuid_term_features_export_render($module, $data) {
   $translatables = $code = array();
 
   $code[] = '  $terms = array();';
@@ -113,7 +113,7 @@ function uuid_term_features_export_render($module = 'foo', $data) {
 
     // Export the parent uuids.
     foreach ($terms as $term) {
-      if($parents = taxonomy_get_parents($term->tid)) {
+      if ($parents = taxonomy_get_parents($term->tid)) {
         foreach ($parents as $parent) {
           $term->parent[] = $parent->uuid;
         }
