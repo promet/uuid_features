@@ -43,7 +43,7 @@ function uuid_term_features_export($data, &$export, $module_name = '') {
   $export['dependencies']['uuid_features'] = 'uuid_features';
 
   foreach ($data as $uuid) {
-    uuid_term_features_get_dependencies($export, $uuid);
+    uuid_term_features_get_dependencies($export, $uuid, $module_name);
 
     $entity_type = 'taxonomy_term';
     $term = entity_uuid_load($entity_type, $data);
@@ -59,7 +59,7 @@ function uuid_term_features_export($data, &$export, $module_name = '') {
  * Parents and term references are handled recursively, other references are not
  * yet supported.
  */
-function uuid_term_features_get_dependencies(&$export, $uuid) {
+function uuid_term_features_get_dependencies(&$export, $uuid, $module_name = '') {
   $map = features_get_default_map('taxonomy');
   $terms = entity_uuid_load('taxonomy_term', array($uuid));
   if (!isset($export['features']['uuid_term'])) {
@@ -81,7 +81,7 @@ function uuid_term_features_get_dependencies(&$export, $uuid) {
     // Recursively add all parents and the references of the parents.
     foreach (taxonomy_get_parents($term->tid) as $parent) {
       if (!in_array($parent->uuid, $export['features']['uuid_term'])) {
-        uuid_term_features_get_dependencies($export, $parent->uuid);
+        uuid_term_features_get_dependencies($export, $parent->uuid, $module_name);
       }
     }
     // Get term references.
@@ -94,7 +94,7 @@ function uuid_term_features_get_dependencies(&$export, $uuid) {
             foreach ($values as $value) {
               // $value['tid'] already contains the UUID.
               if (!in_array($value['tid'], $export['features']['uuid_term'])) {
-                uuid_term_features_get_dependencies($export, $value['tid']);
+                uuid_term_features_get_dependencies($export, $value['tid'], $module_name);
               }
             }
           }
