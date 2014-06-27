@@ -53,10 +53,11 @@ function uuid_node_features_export($data, &$export, $module_name = '') {
     // that need to be altered, and they'll be split out into additional params
     // for the hook_*_alter() implementations.
     $data = &$export;
-    $data['__drupal_alter_by_ref'] = array(&$pipe);
+    $data['__drupal_alter_by_ref']['pipe'] = &$pipe;
     $entity_type = 'node';
     drupal_alter('uuid_entity_features_export', $entity_type, $data, $node);
-    drupal_alter('uuid_node_features_export', $data, $node);
+    drupal_alter('uuid_node_features_export', $data, $node, $module);
+    unset($data['__drupal_alter_by_ref']);
   }
 
   return $pipe;

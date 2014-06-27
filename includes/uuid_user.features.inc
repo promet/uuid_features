@@ -39,9 +39,11 @@ function uuid_user_features_export($data, &$export, $module_name = '') {
     $export['features']['uuid_user'][$uuid] = $uuid;
 
     $data = &$export;
+    $data['__drupal_alter_by_ref']['pipe'] = &$pipe;
     $entity_type = 'user';
     drupal_alter('uuid_entity_features_export', $entity_type, $data, $user);
-    drupal_alter('uuid_user_features_export', $data, $user);
+    drupal_alter('uuid_user_features_export', $data, $user, $module_name);
+    unset($data['__drupal_alter_by_ref']);
   }
 
   return $pipe;

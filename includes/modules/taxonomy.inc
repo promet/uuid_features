@@ -5,9 +5,11 @@
  */
 
 /**
- * Implements hook_uuid_node_features_export_render().
+ * Implements hook_uuid_node_features_export_render_alter().
  */
-function taxonomy_uuid_node_features_export_alter(&$export, &$pipe, $node) {
+function taxonomy_uuid_node_features_export_alter(&$export, $node) {
+  // Access / modify the pipe.
+  $pipe = &$export['__drupal_alter_by_ref']['pipe'];
   if (!empty($node->taxonomy)) {
     foreach ($node->taxonomy as $term) {
       $vocabulary = taxonomy_vocabulary_load($term->vid);

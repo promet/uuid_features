@@ -54,8 +54,9 @@ function hook_uuid_entity_features_rebuild_alter($entity_type, $entity, $data) {
  * @param object $node
  *   The node to export.
  */
-function hook_uuid_node_features_export_alter(&$data, $node) {
-
+function hook_uuid_node_features_export_alter(&$data, $node, $module) {
+  // Access / modify the pipe.
+  $pipe = &$export['__drupal_alter_by_ref']['pipe'];
 }
 
 /**

@@ -38,6 +38,8 @@ function uuid_term_features_export_options() {
  * Implements hook_features_export().
  */
 function uuid_term_features_export($data, &$export, $module_name = '') {
+  $pipe = array();
+
   $export['dependencies']['taxonomy'] = 'taxonomy';
   $export['dependencies']['uuid'] = 'uuid';
   $export['dependencies']['uuid_features'] = 'uuid_features';
@@ -48,9 +50,13 @@ function uuid_term_features_export($data, &$export, $module_name = '') {
     $entity_type = 'taxonomy_term';
     $term = entity_uuid_load($entity_type, $data);
     $term = reset($term);
+    $alter_data = &$export;
+    $alter_data['__drupal_alter_by_ref']['pipe'] = &$pipe;
     drupal_alter('uuid_entity_features_export', $entity_type, $export, $term);
+    drupal_alter('uuid_term_features_export', $alter_data, $term, $module_name);
+    unset($alter_data['__drupal_alter_by_ref']);
   }
-  return array();
+  return $pipe;
 }
 
 /**
