@@ -352,7 +352,11 @@ function uuid_features_file_field_export(&$export, $entity_type) {
 
               // Check the file.
               if (!isset($file->uri) || !is_file($file->uri)) {
-                drupal_set_message(t("File field found on term, but file doesn't exist on disk? '!path'", array('!path' => $file->uri)), 'warning');
+                $path = (isset($file->uri)) ? $file->uri : 'unknown';
+                drupal_set_message(t("File field found on %entity_type, but file doesn't exist on disk? '!path'", array(
+                  '%entity_type' => $entity_type,
+                  '!path' => $path,
+                )), 'warning');
                 continue;
               }
 
