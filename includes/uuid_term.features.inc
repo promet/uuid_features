@@ -60,6 +60,7 @@ function uuid_term_features_export($data, &$export, $module_name = '') {
  * yet supported.
  */
 function uuid_term_features_get_dependencies(&$export, $uuid) {
+  $map = features_get_default_map('taxonomy');
   $terms = entity_uuid_load('taxonomy_term', array($uuid));
   if (!isset($export['features']['uuid_term'])) {
     $export['features']['uuid_term'] = array();
@@ -70,7 +71,13 @@ function uuid_term_features_get_dependencies(&$export, $uuid) {
   if (count($terms)) {
     $term = reset($terms);
     $export['features']['uuid_term'][$uuid] = $uuid;
-    $export['features']['taxonomy'][$term->vocabulary_machine_name] = $term->vocabulary_machine_name;
+    $machine_name = $term->vocabulary_machine_name;
+    if (isset($map[$machine_name]) && $map[$machine_name] != $module_name) {
+      $export['dependencies'][$map[$machine_name]] = $map[$machine_name];
+    }
+    else {
+      $export['features']['taxonomy'][$machine_name] = $machine_name;
+    }
     // Recursively add all parents and the references of the parents.
     foreach (taxonomy_get_parents($term->tid) as $parent) {
       if (!in_array($parent->uuid, $export['features']['uuid_term'])) {
@@ -78,7 +85,7 @@ function uuid_term_features_get_dependencies(&$export, $uuid) {
       }
     }
     // Get term references.
-    $instances = field_info_instances('taxonomy_term', $term->vocabulary_machine_name);
+    $instances = field_info_instances('taxonomy_term', $machine_name);
     foreach ($instances as $field_name => $instance) {
       $field = field_info_field($field_name);
       if ($field['type'] == 'taxonomy_term_reference') {
