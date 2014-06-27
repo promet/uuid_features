@@ -16,16 +16,21 @@ function entity_translation_uuid_entity_features_export_render_alter($entity_typ
       if (isset($translations->data)) {
         foreach ($translations->data as $language => $value) {
           // Replace entity_id by uuid.
-          $uuids = entity_get_uuid_by_id($entity_type, array($translations->data[$language]['entity_id']));
-          $translations->data[$language]['entity_uuid'] = reset($uuids);
+          if (isset($translations->data[$language]['entity_id'])) {
+            $uuids = entity_get_uuid_by_id($entity_type, array($translations->data[$language]['entity_id']));
+            $translations->data[$language]['entity_uuid'] = reset($uuids);
+          }
           // Replace user id by uuid.
-          $uuids = entity_get_uuid_by_id('user', array($translations->data[$language]['uid']));
-          $translations->data[$language]['user_uuid'] = reset($uuids);
+          if (isset($translations->data[$language]['uid'])) {
+            $uuids = entity_get_uuid_by_id('user', array($translations->data[$language]['uid']));
+            $translations->data[$language]['user_uuid'] = reset($uuids);
+          }
           // Remove unnecessary keys.
           unset(
             $translations->data[$language]['uid'],
             $translations->data[$language]['entity_id'],
-            $translations->data[$language]['revision_id']
+            $translations->data[$language]['revision_id'],
+            $translations->data[$language]['changed']
           );
         }
       }
@@ -58,6 +63,11 @@ function entity_translation_uuid_entity_features_rebuild_alter($entity_type, &$e
             $user_ids = entity_get_id_by_uuid('user', array($translations->data[$language]['user_uuid']));
             $translations->data[$language]['uid'] = (!empty($user_ids)) ? reset($user_ids) : UUID_FEATURES_DEFAULT_FALLBACK_ID;
           }
+          // Remove unnecessary keys.
+          unset(
+            $translations->data[$language]['entity_uuid'],
+            $translations->data[$language]['user_uuid']
+          );
         }
       }
     }
