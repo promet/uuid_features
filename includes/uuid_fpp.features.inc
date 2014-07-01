@@ -125,7 +125,9 @@ function uuid_fpp_features_rebuild($module) {
 
   if (!empty($fpps)) {
     // Get info about current FPP types available in system.
-    $entity_info = entity_get_info("fieldable_panels_pane");
+    $entity_info = entity_get_info('fieldable_panels_pane');
+    $entity_type = 'fieldable_panels_pane';
+
     // Loop through the export.
     foreach ($fpps as $data) {
       // Double-check that FPP can be created/reverted.
@@ -146,6 +148,8 @@ function uuid_fpp_features_rebuild($module) {
           $fpp = entity_create('fieldable_panels_pane', $data);
         }
 
+        drupal_alter('uuid_entity_features_rebuild', $entity_type, $fpp, $data);
+
         uuid_features_file_field_import($fpp, 'fieldable_panels_pane');
 
         if (!fieldable_panels_panes_save($fpp)) {
@@ -153,6 +157,7 @@ function uuid_fpp_features_rebuild($module) {
         }
       }
     }
+    module_invoke_all('uuid_entity_features_rebuild_complete', $entity_type, $fpps, $module);
   }
 }
 

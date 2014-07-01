@@ -36,7 +36,7 @@ function hook_uuid_entity_features_export_render_alter($entity_type, $export, $e
  * Allows to handle specific import tasks for an entity.
  *
  * @param string $entity_type
- *   The entity type to export.
+ *   The entity type to rebuild.
  * @param object $entity
  *   The entity to import.
  * @param array $data
@@ -44,6 +44,19 @@ function hook_uuid_entity_features_export_render_alter($entity_type, $export, $e
  */
 function hook_uuid_entity_features_rebuild_alter($entity_type, $entity, $data) {
 
+}
+
+/**
+ * Allows to act whenever all entities of a type / module are rebuilt.
+ *
+ * @param string $entity_type
+ *   The entity type to export.
+ * @param array $entities
+ *   The entities to import.
+ * @param string $module
+ *   The module to import for.
+ */
+function hook_uuid_entity_features_rebuild_complete($entity_type, $entities, $module) {
 }
 
 /**

@@ -110,6 +110,7 @@ function uuid_user_features_rebuild($module) {
 
   if (!empty($users)) {
     module_load_include('inc', 'user', 'user.pages');
+    $entity_type = 'user';
 
     foreach ($users as $data) {
       $account = (object) $data;
@@ -146,7 +147,6 @@ function uuid_user_features_rebuild($module) {
         $existing->uid = NULL;
       }
 
-      $entity_type = 'user';
       drupal_alter('uuid_entity_features_rebuild', $entity_type, $account, $data);
       drupal_alter('uuid_user_features_rebuild', $account, $module);
 
@@ -163,6 +163,7 @@ function uuid_user_features_rebuild($module) {
       // Clear out previously loaded user account if one was found.
       unset($existing);
     }
+    module_invoke_all('uuid_entity_features_rebuild_complete', $entity_type, $users, $module);
   }
   uuid_node_features_rebuild($module);
 }

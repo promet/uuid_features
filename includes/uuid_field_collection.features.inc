@@ -116,6 +116,7 @@ function uuid_field_collection_features_rebuild($module) {
 
   $field_collections = module_invoke($module, 'uuid_features_default_field_collections');
   if (!empty($field_collections)) {
+    $entity_type = 'field_collection_item';
     foreach ($field_collections as $field_collection_item) {
       try {
         $fields = field_info_instances('field_collection_item', $field_collection_item['field_name']);
@@ -150,6 +151,8 @@ function uuid_field_collection_features_rebuild($module) {
         /* @var FieldCollectionItemEntity $entity */
         $entity->is_new = FALSE;
 
+        drupal_alter('uuid_entity_features_rebuild', $entity_type, $entity, $field_collection_item);
+
         uuid_features_file_field_import($entity, 'field_collection_item');
 
         $entity->save(TRUE);
@@ -158,6 +161,7 @@ function uuid_field_collection_features_rebuild($module) {
 
       }
     }
+    module_invoke_all('uuid_entity_features_rebuild_complete', $entity_type, $field_collections, $module);
   }
   uuid_node_features_rebuild($module);
 }

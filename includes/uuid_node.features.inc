@@ -135,6 +135,7 @@ function uuid_node_features_revert($module) {
  * Rebuilds nodes based on UUID from code defaults.
  */
 function uuid_node_features_rebuild($module) {
+  $return = TRUE;
   // Import the terms first.
   uuid_term_features_rebuild($module);
 
@@ -151,9 +152,12 @@ function uuid_node_features_rebuild($module) {
     }
 
     $nodes = array_merge($nodes, $tmp);
-    return uuid_node_features_rebuild_nodes($nodes);
+    $return = uuid_node_features_rebuild_nodes($nodes);
+
+    $entity_type = 'node';
+    module_invoke_all('uuid_entity_features_rebuild_complete', $entity_type, $nodes, $module);
   }
-  return TRUE;
+  return $return;
 }
 
 /**

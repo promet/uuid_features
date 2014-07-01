@@ -145,6 +145,8 @@ function uuid_bean_features_rebuild($module) {
   if (!empty($beans)) {
     // Get info about current beans types available in system.
     $entity_info = bean_entity_info();
+    $entity_type = 'bean';
+
     // Loop through the export.
     foreach ($beans as $data) {
       // Double-check that bean can be created/reverted.
@@ -164,6 +166,9 @@ function uuid_bean_features_rebuild($module) {
           // Create a new bean.
           $bean = entity_create('bean', $data);
         }
+
+        drupal_alter('uuid_entity_features_rebuild', $entity_type, $bean, $data);
+
         // Import file fields.
         uuid_features_file_field_import($bean, 'bean');
         if (!$bean->save()) {
@@ -171,5 +176,6 @@ function uuid_bean_features_rebuild($module) {
         }
       }
     }
+    module_invoke_all('uuid_entity_features_rebuild_complete', $entity_type, $beans, $module);
   }
 }
