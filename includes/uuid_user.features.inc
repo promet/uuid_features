@@ -41,7 +41,7 @@ function uuid_user_features_export($data, &$export, $module_name = '') {
     $data = &$export;
     $data['__drupal_alter_by_ref']['pipe'] = &$pipe;
     $entity_type = 'user';
-    drupal_alter('uuid_entity_features_export', $entity_type, $data, $user);
+    drupal_alter('uuid_entity_features_export', $entity_type, $data, $user, $module_name);
     drupal_alter('uuid_user_features_export', $data, $user, $module_name);
     unset($data['__drupal_alter_by_ref']);
   }
@@ -76,7 +76,7 @@ function uuid_user_features_export_render($module, $data) {
     unset($export->uid, $export->pass);
 
     $entity_type = 'user';
-    drupal_alter('uuid_entity_features_export_render', $entity_type, $export, $account);
+    drupal_alter('uuid_entity_features_export_render', $entity_type, $export, $account, $module);
     drupal_alter('uuid_user_features_export_render', $export, $account, $module);
 
     $code[] = '  $users[] = ' . features_var_export($export) . ';';
@@ -147,7 +147,7 @@ function uuid_user_features_rebuild($module) {
         $existing->uid = NULL;
       }
 
-      drupal_alter('uuid_entity_features_rebuild', $entity_type, $account, $data);
+      drupal_alter('uuid_entity_features_rebuild', $entity_type, $account, $data, $module);
       drupal_alter('uuid_user_features_rebuild', $account, $module);
 
       if ($existing->uid === NULL) {

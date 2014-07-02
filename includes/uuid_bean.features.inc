@@ -73,7 +73,7 @@ function uuid_bean_features_export($data, &$export, $module_name = '') {
     $data = &$export;
     $data['__drupal_alter_by_ref']['pipe'] = &$pipe;
     $entity_type = 'bean';
-    drupal_alter('uuid_entity_features_export', $entity_type, $data, $bean);
+    drupal_alter('uuid_entity_features_export', $entity_type, $data, $bean, $module);
     drupal_alter('uuid_bean_features_export', $data, $bean, $module);
     unset($data['__drupal_alter_by_ref']);
   }
@@ -108,7 +108,7 @@ function uuid_bean_features_export_render($module, $data) {
     uuid_features_file_field_export($export, 'bean');
 
     $entity_type = 'bean';
-    drupal_alter('uuid_entity_features_export_render', $entity_type, $export, $first_bean);
+    drupal_alter('uuid_entity_features_export_render', $entity_type, $export, $first_bean, $module);
     drupal_alter('uuid_bean_features_export_render', $export, $first_bean, $module);
 
     $json = json_encode($export);
@@ -167,7 +167,7 @@ function uuid_bean_features_rebuild($module) {
           $bean = entity_create('bean', $data);
         }
 
-        drupal_alter('uuid_entity_features_rebuild', $entity_type, $bean, $data);
+        drupal_alter('uuid_entity_features_rebuild', $entity_type, $bean, $data, $module);
 
         // Import file fields.
         uuid_features_file_field_import($bean, 'bean');

@@ -78,7 +78,7 @@ function uuid_field_collection_features_export_render($module, $data) {
     uuid_features_file_field_export($export, 'field_collection_item');
 
     $entity_type = 'field_collection_item';
-    drupal_alter('uuid_entity_features_export_render', $entity_type, $export, $field_collection);
+    drupal_alter('uuid_entity_features_export_render', $entity_type, $export, $field_collection, $module);
 
     $export_output = features_var_export($export, '  ');
     $export_output = str_replace("entity_import('field_collection_item', '", "", $export_output);
@@ -151,7 +151,7 @@ function uuid_field_collection_features_rebuild($module) {
         /* @var FieldCollectionItemEntity $entity */
         $entity->is_new = FALSE;
 
-        drupal_alter('uuid_entity_features_rebuild', $entity_type, $entity, $field_collection_item);
+        drupal_alter('uuid_entity_features_rebuild', $entity_type, $entity, $field_collection_item, $module);
 
         uuid_features_file_field_import($entity, 'field_collection_item');
 

@@ -8,7 +8,7 @@
 /**
  * Implements hook_uuid_entity_features_export_render_alter().
  */
-function title_uuid_entity_features_export_render_alter($entity_type, &$export, &$entity) {
+function title_uuid_entity_features_export_render_alter($entity_type, &$export, &$entity, $module) {
   $entity_info = entity_get_info($entity_type);
 
   // Don't export title module original fields.

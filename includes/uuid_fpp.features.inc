@@ -148,7 +148,7 @@ function uuid_fpp_features_rebuild($module) {
           $fpp = entity_create('fieldable_panels_pane', $data);
         }
 
-        drupal_alter('uuid_entity_features_rebuild', $entity_type, $fpp, $data);
+        drupal_alter('uuid_entity_features_rebuild', $entity_type, $fpp, $data, $module);
 
         uuid_features_file_field_import($fpp, 'fieldable_panels_pane');
 

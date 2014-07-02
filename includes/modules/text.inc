@@ -7,7 +7,7 @@
 /**
  * Implements hook_uuid_entity_features_export_render_alter().
  */
-function text_uuid_entity_features_export_render_alter($entity_type, &$export, &$entity) {
+function text_uuid_entity_features_export_render_alter($entity_type, &$export, &$entity, $module) {
   list($id, $revision, $bundle) = entity_extract_ids($entity_type, $entity);
 
   $fields_info = field_info_instances($entity_type, $bundle);
