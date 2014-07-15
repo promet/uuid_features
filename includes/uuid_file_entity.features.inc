@@ -118,7 +118,6 @@ function uuid_file_entity_features_export_render($module, $data) {
 
     unset($export->fid);
     unset($export->timestamp);
-    unset($export->created);
 
     $code[] = '  $files[] = ' . features_var_export($export, '  ') . ';';
   }

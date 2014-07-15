@@ -17,8 +17,8 @@ function user_uuid_entity_features_export_render_alter($entity_type, $export, $e
     unset($export->uid);
 
     if ($entity_type == 'node') {
-      // Ensure we don't export the name or uid property which could lead to a user
-      // override due to the handling in node_submit().
+      // Ensure we don't export the name or uid property which could lead to a
+      // user override due to the handling in node_submit().
       unset($export->name);
 
       // Remove other properties handled solely by user module.
