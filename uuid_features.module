@@ -785,8 +785,23 @@ function uuid_features_fetch_uuid_references(&$fields, $entity_type, $map) {
     foreach ($field_languages as &$field_values) {
       if (is_array($field_values)) {
         foreach ($field_values as &$field_value) {
-          $entities = entity_uuid_load($entity_type, array($field_value['uuid']), array(), TRUE);
+          $uuid = 'not found';
+          if (isset($field_value['uuid'])) {
+            $uuid = $field_value['uuid'];
+          }
+          else {
+            // Try our best to load a reference even if the explicit uuid key is
+            // missing. It's likely that the uuid was stored in the first map
+            // key. This is for backward compatibility.
+            $target_key = reset($map);
+            if (isset($field_value[$target_key])) {
+              $uuid = $field_value[$target_key];
+            }
+          }
+
+          $entities = entity_uuid_load($entity_type, array($uuid), array(), TRUE);
           $referenced_entity = reset($entities);
+
           foreach ($map as $source => $destination) {
             if ($referenced_entity) {
               $field_value[$destination] = $referenced_entity->{$source};
