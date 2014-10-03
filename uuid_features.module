@@ -60,6 +60,7 @@ function uuid_features_entity_info_alter(&$entity_info) {
     'taxonomy_term',
     'fieldable_panels_pane',
     'commerce_product',
+    'field_collection_item',
   );
   if (module_exists('file_entity')) {
     $entity_types[] = 'file';
