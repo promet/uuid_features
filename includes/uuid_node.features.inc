@@ -44,7 +44,7 @@ function uuid_node_features_export($data, &$export, $module_name = '') {
   foreach ($nids as $uuid => $nid) {
     // Load the existing node, with a fresh cache.
     $node = node_load($nid, NULL, TRUE);
-    entity_make_entity_universal('node', $node);
+    entity_make_entity_universal('node', array($node));
 
     $export['features']['uuid_node'][$uuid] = $uuid;
     $pipe['node'][$node->type] = $node->type;
