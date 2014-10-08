@@ -44,6 +44,7 @@ function uuid_node_features_export($data, &$export, $module_name = '') {
   foreach ($nids as $uuid => $nid) {
     // Load the existing node, with a fresh cache.
     $node = node_load($nid, NULL, TRUE);
+    entity_make_entity_universal('node', $node);
 
     $export['features']['uuid_node'][$uuid] = $uuid;
     $pipe['node'][$node->type] = $node->type;
@@ -215,7 +216,7 @@ function uuid_node_features_rebuild_nodes($nodes, $module, $max_nesting = 5, $ne
 
       $node = node_submit($node);
       uuid_features_file_field_import($node, 'node');
-      node_save($node);
+      entity_uuid_save('node', $node);
     }
     catch (Exception $e) {
       $second_run_nodes[] = $data;
