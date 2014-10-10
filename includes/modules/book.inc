@@ -5,6 +5,17 @@
  */
 
 /**
+ * Implements hook_uuid_entity_features_export_alter().
+ */
+function book_uuid_node_features_export_alter(&$export, $node, $module) {
+  if (isset($node->book['bid'])) {
+    $pipe = &$export['__drupal_alter_by_ref']['pipe'];
+    $uuid = current(entity_get_uuid_by_id('node', array($node->book['bid'])));
+    $pipe['uuid_book'][$uuid] = $uuid;
+  }
+}
+
+/**
  * Implements hook_uuid_node_features_export_render_alter().
  *
  * For root book pages - set bid to new. For child pages set a parent_uuid
@@ -13,15 +24,16 @@
 function book_uuid_node_features_export_render_alter(&$export, $node, $module) {
   if (isset($node->book) && isset($node->book['bid']) && isset($node->book['nid'])) {
     $node_book_export = array();
-    // $export->book = array();
     if ($node->book['bid'] == $node->book['nid']) {
       $node_book_export['bid'] = 'new';
+      $node_book_export['parent_depth_limit'] = 1;
     }
     elseif (isset($node->book['plid'])) {
       $parent_menu_link = book_link_load($node->book['plid']);
       $parent_node = node_load($parent_menu_link['nid']);
       if (!empty($parent_node)) {
         $node_book_export['parent_uuid'] = $parent_node->uuid;
+        $node_book_export['bid'] = $parent_node->uuid;
         $node_book_export['weight'] = $node->book['weight'];
       }
     }
@@ -53,6 +65,10 @@ function book_uuid_node_features_rebuild_alter($node, $module) {
       else {
         // Add to pending.
         _book_uuid_node_features_pending($node);
+      }
+      // Ensure the uuid module has something to process.
+      if (function_exists('book_entity_uuid_presave')) {
+        $node->book['bid'] = $node->book['parent_uuid'];
       }
     }
   }
