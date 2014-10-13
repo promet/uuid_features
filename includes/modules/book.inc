@@ -62,6 +62,14 @@ function book_uuid_node_features_export_render_alter(&$export, $node, $module) {
  * book nodes for post node rebuild processing.
  */
 function book_uuid_node_features_rebuild_alter($node, $module) {
+  // Ensure we don't have a bogus book configuration. book_node_prepare() adds
+  // defaults that trigger book_entity_uuid_presave() to create a new book where
+  // none is. This just happens when an user with the right permissions reverts
+  // the feature.
+  if (empty($node->book['bid']) && isset($node->book['original_bid'])) {
+    unset($node->book);
+  }
+
   if (isset($node->book)) {
     if (isset($node->book['parent_uuid'])) {
       $parent_node = entity_load_single_by_uuid('node', $node->book['parent_uuid']);
@@ -82,6 +90,12 @@ function book_uuid_node_features_rebuild_alter($node, $module) {
   if (!empty($existing->book['mlid'])) {
     $node->book['mlid'] = $existing->book['mlid'];
     $node->book['plid'] = $existing->book['plid'];
+  }
+  elseif (!empty($existing->book) && !isset($node->book)) {
+    // Delete a book that doesn't exist in the export. Abuse the hook_node_delte
+    // integration.
+    // @TODO is this the right approach?
+    book_node_delete($existing);
   }
 }
 
