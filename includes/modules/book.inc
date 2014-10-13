@@ -12,6 +12,14 @@ function book_uuid_node_features_export_alter(&$export, $node, $module) {
     $pipe = &$export['__drupal_alter_by_ref']['pipe'];
     $uuid = current(entity_get_uuid_by_id('node', array($node->book['bid'])));
     $pipe['uuid_book'][$uuid] = $uuid;
+
+    // If a parent is defined add the parent node as dependency.
+    if (isset($node->book['plid']) && ($parent_menu_link = book_link_load($node->book['plid']))) {
+      $parent_uuid = current(entity_get_uuid_by_id('node', array($parent_menu_link['nid'])));
+      if (!empty($parent_uuid)) {
+        $pipe['uuid_node'][$uuid]  = $uuid;
+      }
+    }
   }
 }
 
@@ -28,12 +36,16 @@ function book_uuid_node_features_export_render_alter(&$export, $node, $module) {
       $node_book_export['bid'] = 'new';
       $node_book_export['parent_depth_limit'] = 1;
     }
-    elseif (isset($node->book['plid'])) {
-      $parent_menu_link = book_link_load($node->book['plid']);
-      $parent_node = node_load($parent_menu_link['nid']);
-      if (!empty($parent_node)) {
-        $node_book_export['parent_uuid'] = $parent_node->uuid;
-        $node_book_export['bid'] = $parent_node->uuid;
+    else {
+      $book_uuid = current(entity_get_uuid_by_id('node', array($node->book['bid'])));
+      $node_book_export['bid'] = $book_uuid;
+    }
+
+    // If a parent is defined ensure we export the parent uuid.
+    if (isset($node->book['plid']) && ($parent_menu_link = book_link_load($node->book['plid']))) {
+      $parent_uuid = current(entity_get_uuid_by_id('node', array($parent_menu_link['nid'])));
+      if (!empty($parent_uuid)) {
+        $node_book_export['parent_uuid'] = $parent_uuid;
         $node_book_export['weight'] = $node->book['weight'];
       }
     }
@@ -52,12 +64,10 @@ function book_uuid_node_features_export_render_alter(&$export, $node, $module) {
 function book_uuid_node_features_rebuild_alter($node, $module) {
   if (isset($node->book)) {
     if (isset($node->book['parent_uuid'])) {
-      $parent_node = entity_uuid_load('node', array($node->book['parent_uuid']));
-      $parent_node = reset($parent_node);
+      $parent_node = entity_load_single_by_uuid('node', $node->book['parent_uuid']);
 
       if ($parent_node && isset($parent_node->book['mlid'])) {
         // Set up node as for add child page.
-        $node->book['bid'] = $parent_node->book['bid'];
         $node->book['plid'] = $parent_node->book['mlid'];
         $node->book['menu_name'] = $parent_node->book['menu_name'];
         $node->book['weight'] = $node->book['weight'];
@@ -66,16 +76,12 @@ function book_uuid_node_features_rebuild_alter($node, $module) {
         // Add to pending.
         _book_uuid_node_features_pending($node);
       }
-      // Ensure the uuid module has something to process.
-      if (function_exists('book_entity_uuid_presave')) {
-        $node->book['bid'] = $node->book['parent_uuid'];
-      }
     }
   }
-  $existing = entity_uuid_load('node', array($node->uuid));
-  $existing = reset($existing);
+  $existing = entity_load_single_by_uuid('node', $node->uuid);
   if (!empty($existing->book['mlid'])) {
     $node->book['mlid'] = $existing->book['mlid'];
+    $node->book['plid'] = $existing->book['plid'];
   }
 }
 
@@ -96,11 +102,8 @@ function book_uuid_entity_features_rebuild_complete($entity_type, $entities, $mo
     }
 
     foreach ($pending as $uuid => $book) {
-      $book_page_node = entity_uuid_load('node', array($uuid));
-      $book_page_node = reset($book_page_node);
-
-      $parent_node = entity_uuid_load('node', array($book['parent_uuid']));
-      $parent_node = reset($parent_node);
+      $book_page_node = entity_load_single_by_uuid('node', $uuid);
+      $parent_node = entity_load_single_by_uuid('node', $book['parent_uuid']);
 
       // Set up node as for add child page.
       $book_page_node->book['bid'] = $parent_node->book['bid'];

@@ -832,3 +832,23 @@ function uuid_features_fetch_uuid_references(&$fields, $entity_type, $map) {
     }
   }
 }
+
+// As it's quite likely someone else will build this as well, create it
+// conditionally.
+if (!function_exists('entity_load_single_by_uuid')) {
+  /**
+   * Loads a single local entity by it's uuid.
+   *
+   * @param string $entity_type
+   *   The entity type.
+   * @param string $uuid
+   *   The uuid of the entity.
+   *
+   * @return object|FALSE
+   *   The entity or FALSE on failure.
+   */
+  function entity_load_single_by_uuid($entity_type, $uuid) {
+    $entity_id = current(entity_get_id_by_uuid($entity_type, array($uuid)));
+    return entity_load_single($entity_type, $entity_id);
+  }
+}
