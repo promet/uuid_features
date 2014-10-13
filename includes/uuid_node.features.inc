@@ -73,6 +73,8 @@ function uuid_node_features_export_render($module, $data) {
   $code[] = '  $nodes = array();';
   $code[] = '';
   $nids = entity_get_id_by_uuid('node', $data);
+  // Always sort by the uuid to ensure the order is maintained.
+  ksort($nids);
   foreach ($nids as $uuid => $nid) {
     // Only export the node if it exists.
     if ($nid === FALSE) {
