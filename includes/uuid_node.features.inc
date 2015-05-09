@@ -85,9 +85,37 @@ function uuid_node_features_export_render($module, $data) {
     if (empty($node)) {
       continue;
     }
-    if (!empty($node->path)) {
-      $node->pathauto_perform_alias = FALSE;
+    //
+    // Add path and pathauto settings
+    //
+    if (!property_exists($node, 'path')) {
+      $node->path = array();
     }
+
+    $uri = entity_uri('node', $node);
+    $path = drupal_get_path_alias($uri['path']);
+
+    if (module_exists('pathauto')) {
+      module_load_include('inc', 'pathauto');
+      $pathauto_alias = pathauto_create_alias(
+        'node',                             /* entity type */
+        'return',                           /* operation */
+        $uri['path'],                       /* source */
+        array('node' => $node),             /* data */
+        $node->type                         /* bundle */
+      );
+
+      if (!($path != $uri['path'] && $path == $pathauto_alias)) {
+        $node->path['pathauto'] = FALSE;
+        $node->path['alias'] = $path;
+      } else {
+        $node->path['pathauto'] = TRUE;
+      }
+    } else {
+      $node->path['alias'] = $path;
+    }
+
+
     // Clone entity to avoid changes by reference.
     $export = clone $node;
 
